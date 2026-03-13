@@ -860,8 +860,8 @@
   <script>
     /* ── Config ─────────────────────────────────────── */
     const VIDEO_SCROLL_VH = 6;
-    // One video frame duration. Stepping by this ensures no frames are skipped.
-    const FRAME_DURATION  = 1 / 30;
+    // One video frame duration for the 24fps source video.
+    const FRAME_DURATION  = 1 / 24;
 
     /* ── Elements ───────────────────────────────────── */
     const video       = document.getElementById('scroll-video');
