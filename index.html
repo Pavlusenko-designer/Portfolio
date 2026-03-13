@@ -860,6 +860,7 @@
   <script>
     /* ── Config ─────────────────────────────────────── */
     const VIDEO_SCROLL_VH = 6;
+    const LERP            = 0.10; // video smoothing (lower = smoother, more lag)
 
     /* ── Elements ───────────────────────────────────── */
     const video       = document.getElementById('scroll-video');
@@ -873,26 +874,42 @@
     const textBlocks  = document.querySelectorAll('.text-block');
 
     /* ── State ──────────────────────────────────────── */
-    let videoReady     = false;
-    let ticking        = false;
-    let videoSectionPx = window.innerHeight * VIDEO_SCROLL_VH;
+    let videoReady      = false;
+    let videoActivated  = false;
+    let loaderHidden    = false;
+    let videoSectionPx  = window.innerHeight * VIDEO_SCROLL_VH;
+    let targetFraction  = 0;   // raw scroll position (0–1)
+    let smoothFraction  = 0;   // lerped — used only for video.currentTime
 
     window.addEventListener('resize', () => {
       videoSectionPx = window.innerHeight * VIDEO_SCROLL_VH;
     }, { passive: true });
 
-    function videoFraction() {
+    function getScrollFraction() {
       return Math.min(Math.max(window.scrollY / videoSectionPx, 0), 1);
     }
 
-    /* ── Video scrub ────────────────────────────────── */
+    /* ── iOS: activate video on first gesture ────────
+       iOS won't allow seeking a never-played video.
+       play()→pause() on first touch unlocks seeking.  */
+    function activateVideo() {
+      if (videoActivated || !videoReady) return;
+      videoActivated = true;
+      const p = video.play();
+      if (p) p.then(() => { video.pause(); video.currentTime = smoothFraction * (video.duration || 0); }).catch(() => {});
+    }
+    ['touchstart', 'touchmove', 'scroll'].forEach(e =>
+      window.addEventListener(e, activateVideo, { once: true, passive: true })
+    );
+
+    /* ── Video scrub (uses lerped fraction) ──────────── */
     function updateVideo(f) {
       if (!videoReady || !video.duration) return;
       const t = f * video.duration;
       if (Math.abs(video.currentTime - t) > 0.016) video.currentTime = t;
     }
 
-    /* ── Text blocks ────────────────────────────────── */
+    /* ── Text blocks (use raw fraction — instant) ────── */
     function updateText(f) {
       textBlocks.forEach(el => {
         const start    = parseFloat(el.dataset.start);
@@ -902,7 +919,6 @@
         if (f >= start && f <= end) {
           const p = (f - start) / (end - start);
           let opacity, ty;
-
           if (p < 0.18) {
             opacity = p / 0.18;
             ty = (1 - opacity) * 30;
@@ -910,10 +926,8 @@
             opacity = (1 - p) / 0.20;
             ty = -((p - 0.80) / 0.20) * 20;
           } else {
-            opacity = 1;
-            ty = 0;
+            opacity = 1; ty = 0;
           }
-
           el.style.opacity = Math.max(0, Math.min(1, opacity));
           el.style.transform = isCenter
             ? `translateX(-50%) translateY(${ty}px)`
@@ -929,18 +943,16 @@
 
     /* ── Overlay ────────────────────────────────────── */
     function updateOverlay(f) {
-      const alpha = f > 0.88
-        ? 0.38 + ((f - 0.88) / 0.12) * 0.62
-        : 0.38;
+      const alpha = f > 0.88 ? 0.38 + ((f - 0.88) / 0.12) * 0.62 : 0.38;
       overlay.style.background = `rgba(0,0,0,${alpha})`;
     }
 
-    /* ── Video / overlay visibility ─────────────────── */
+    /* ── Visibility ─────────────────────────────────── */
     function updateVisibility(f) {
       const past = f >= 1;
-      video.style.opacity        = past ? '0' : '1';
-      overlay.style.opacity      = past ? '0' : '1';
-      progressBar.style.opacity  = past ? '0' : '1';
+      video.style.opacity       = past ? '0' : '1';
+      overlay.style.opacity     = past ? '0' : '1';
+      progressBar.style.opacity = past ? '0' : '1';
       scrollHint.classList.toggle('visible', f < 0.06 && !past);
     }
 
@@ -954,58 +966,80 @@
       progressBar.style.width = (f * 100) + '%';
     }
 
-    /* ── Main frame ─────────────────────────────────── */
-    function frame() {
-      const f = videoFraction();
-      updateVideo(f);
-      updateText(f);
-      updateOverlay(f);
-      updateVisibility(f);
-      updateProgress(f);
-      updateNav();
-      ticking = false;
-    }
+    /* ── Continuous RAF loop ─────────────────────────
+       - targetFraction: read from scrollY every frame
+       - smoothFraction: lerps toward target (video only)
+       - UI elements use targetFraction for instant response */
+    function rafLoop() {
+      targetFraction = getScrollFraction();
 
-    function onScroll() {
-      if (!ticking) {
-        requestAnimationFrame(frame);
-        ticking = true;
+      // Lerp video fraction toward scroll position
+      smoothFraction += (targetFraction - smoothFraction) * LERP;
+      if (Math.abs(smoothFraction - targetFraction) < 0.0003) {
+        smoothFraction = targetFraction;
       }
+
+      updateVideo(smoothFraction);      // smooth — video frame
+      updateText(targetFraction);       // instant — text in/out
+      updateOverlay(targetFraction);    // instant — overlay
+      updateVisibility(targetFraction); // instant — show/hide
+      updateProgress(targetFraction);   // instant — progress bar
+      updateNav();                      // instant — nav style
+
+      requestAnimationFrame(rafLoop);
     }
 
     /* ── Loader ─────────────────────────────────────── */
     function hideLoader() {
+      if (loaderHidden) return;
+      loaderHidden = true;
       loaderBar.style.width = '100%';
       loaderLabel.textContent = 'Ready';
       setTimeout(() => loader.classList.add('hidden'), 450);
     }
 
+    // Buffer progress
     video.addEventListener('progress', () => {
-      if (video.duration > 0 && video.buffered.length > 0) {
-        const end = video.buffered.end(video.buffered.length - 1);
-        loaderBar.style.width = Math.round((end / video.duration) * 100) + '%';
-      }
+      if (loaderHidden || !video.duration || !video.buffered.length) return;
+      const pct = (video.buffered.end(video.buffered.length - 1) / video.duration) * 100;
+      loaderBar.style.width = Math.round(pct) + '%';
     });
 
+    // loadedmetadata — metadata ready, video can be seeked
     video.addEventListener('loadedmetadata', () => {
       videoReady = true;
-      window.addEventListener('scroll', onScroll, { passive: true });
-      frame();
+      setTimeout(hideLoader, 5000); // mobile fallback
     });
 
+    // loadeddata — first frame decoded; good enough for mobile
+    video.addEventListener('loadeddata', () => {
+      setTimeout(hideLoader, 600);
+    }, { once: true });
+
+    // canplay — browser thinks it can start playing
+    video.addEventListener('canplay', () => {
+      setTimeout(hideLoader, 300);
+    }, { once: true });
+
+    // canplaythrough — fully buffered (desktop, fast connections)
     video.addEventListener('canplaythrough', hideLoader, { once: true });
 
+    // Already cached / fast load
     if (video.readyState >= 4) {
       videoReady = true;
       hideLoader();
-      window.addEventListener('scroll', onScroll, { passive: true });
+    } else if (video.readyState >= 3) {
+      videoReady = true;
+      setTimeout(hideLoader, 300);
     } else if (video.readyState >= 1) {
       videoReady = true;
-      window.addEventListener('scroll', onScroll, { passive: true });
     }
 
-    /* Initial render + scroll hint */
-    frame();
+    // Hard fallback — never leave user stuck
+    setTimeout(hideLoader, 8000);
+
+    // Kick off the loop + scroll hint
+    requestAnimationFrame(rafLoop);
     setTimeout(() => scrollHint.classList.add('visible'), 1400);
   </script>
 
