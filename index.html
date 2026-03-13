@@ -1,0 +1,1013 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vladyslav Pavlusenko — Product Design Lead</title>
+  <meta name="description" content="Portfolio of Vladyslav Pavlusenko — UX Manager and Product Design Lead with 10+ years building enterprise digital products.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+  <style>
+    /* ─── Reset ─────────────────────────────────────── */
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Manrope', sans-serif;
+      background: #0c0d0e;
+      color: #fff;
+      overflow-x: hidden;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    /* ─── Loader ─────────────────────────────────────── */
+    #loader {
+      position: fixed;
+      inset: 0;
+      background: #0c0d0e;
+      z-index: 200;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 1.75rem;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+    #loader.hidden { opacity: 0; visibility: hidden; pointer-events: none; }
+    .loader-monogram {
+      font-family: 'Instrument Serif', serif;
+      font-size: 2.5rem;
+      color: #fff8ef;
+      letter-spacing: 0.12em;
+    }
+    .loader-track {
+      width: 160px;
+      height: 1px;
+      background: rgba(255,255,255,0.1);
+      position: relative;
+      overflow: hidden;
+    }
+    .loader-bar {
+      position: absolute;
+      top: 0; left: 0;
+      height: 100%;
+      width: 0%;
+      background: #b55c33;
+      transition: width 0.4s ease;
+    }
+    .loader-label {
+      font-size: 0.65rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.3);
+    }
+
+    /* ─── Fixed Video ────────────────────────────────── */
+    #scroll-video {
+      position: fixed;
+      top: 0; left: 0;
+      width: 100vw; height: 100vh;
+      object-fit: cover;
+      z-index: 0;
+      will-change: opacity;
+    }
+
+    /* ─── Video Overlay ──────────────────────────────── */
+    #video-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1;
+      pointer-events: none;
+      background: rgba(0,0,0,0.38);
+      will-change: background;
+    }
+
+    /* ─── Nav ────────────────────────────────────────── */
+    #nav {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      z-index: 50;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 2.25rem 3rem;
+      transition: background 0.4s ease, backdrop-filter 0.4s ease,
+                  border-color 0.4s ease, padding 0.3s ease;
+      border-bottom: 1px solid transparent;
+    }
+    #nav.scrolled {
+      background: rgba(243,236,223,0.92);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+      border-color: rgba(28,26,24,0.1);
+      padding-top: 1.1rem;
+      padding-bottom: 1.1rem;
+    }
+    .nav-brand {
+      font-family: 'Instrument Serif', serif;
+      font-size: 1.1rem;
+      color: rgba(255,255,255,0.9);
+      letter-spacing: 0.03em;
+      transition: color 0.4s;
+    }
+    #nav.scrolled .nav-brand { color: #1c1a18; }
+    .nav-links { display: flex; gap: 2.25rem; }
+    .nav-links a {
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.5);
+      transition: color 0.2s;
+    }
+    .nav-links a:hover { color: rgba(255,255,255,0.95); }
+    #nav.scrolled .nav-links a { color: rgba(28,26,24,0.5); }
+    #nav.scrolled .nav-links a:hover { color: #1c1a18; }
+
+    /* ─── Progress bar ───────────────────────────────── */
+    #progress-bar {
+      position: fixed;
+      bottom: 0; left: 0;
+      height: 2px;
+      width: 0%;
+      background: #b55c33;
+      z-index: 50;
+      will-change: width, opacity;
+      transition: opacity 0.4s ease;
+    }
+
+    /* ─── Scroll hint ────────────────────────────────── */
+    #scroll-hint {
+      position: fixed;
+      bottom: 2.25rem;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      opacity: 0;
+      transition: opacity 0.5s ease;
+      pointer-events: none;
+    }
+    #scroll-hint.visible { opacity: 1; }
+    .hint-label {
+      font-size: 0.6rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,0.38);
+    }
+    .hint-line {
+      width: 1px;
+      height: 36px;
+      background: linear-gradient(to bottom, rgba(255,255,255,0.3), transparent);
+      animation: drip 1.8s ease-in-out infinite;
+    }
+    @keyframes drip {
+      0%   { transform: scaleY(0); transform-origin: top; opacity: 0; }
+      35%  { transform: scaleY(1); transform-origin: top; opacity: 1; }
+      70%  { transform: scaleY(1); transform-origin: bottom; opacity: 1; }
+      100% { transform: scaleY(0); transform-origin: bottom; opacity: 0; }
+    }
+
+    /* ─── Scroll root — creates scroll space ─────────── */
+    #scroll-root { height: 600vh; position: relative; }
+
+    /* ─── Text blocks ────────────────────────────────── */
+    .text-block {
+      position: fixed;
+      z-index: 10;
+      opacity: 0;
+      pointer-events: none;
+      will-change: transform, opacity;
+      max-width: 520px;
+    }
+    .text-block.active { pointer-events: auto; }
+
+    .tb-eyebrow {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #b55c33;
+      margin-bottom: 1rem;
+    }
+    .tb-h1 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(3.2rem, 7vw, 5.5rem);
+      line-height: 1.0;
+      color: #fff8ef;
+      font-weight: 400;
+    }
+    .tb-h2 {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 4.5vw, 3.4rem);
+      line-height: 1.1;
+      color: #fff8ef;
+      font-weight: 400;
+    }
+    .tb-stat {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: clamp(5rem, 12vw, 9rem);
+      color: #fff8ef;
+      line-height: 1;
+      display: block;
+    }
+    .tb-p {
+      font-size: 0.9rem;
+      line-height: 1.7;
+      color: rgba(255,248,239,0.65);
+      margin-top: 0.7rem;
+    }
+    .tb-role {
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff8ef;
+      margin-bottom: 0.2rem;
+    }
+    .tb-company {
+      font-size: 0.75rem;
+      letter-spacing: 0.1em;
+      color: rgba(255,248,239,0.4);
+      margin-bottom: 1.2rem;
+    }
+    .tb-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+      margin-top: 1rem;
+    }
+    .tb-chip {
+      font-size: 0.67rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      padding: 0.38rem 0.85rem;
+      border: 1px solid rgba(255,255,255,0.18);
+      border-radius: 999px;
+      color: rgba(255,248,239,0.65);
+      background: rgba(255,255,255,0.06);
+      backdrop-filter: blur(8px);
+    }
+    .tb-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-top: 2rem;
+      padding: 0.85rem 2rem;
+      background: #b55c33;
+      color: #fff8ef;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.2s;
+      cursor: pointer;
+      pointer-events: auto;
+    }
+    .tb-cta:hover { background: #c96a3f; transform: translateY(-2px); }
+    .tb-scroll-hint {
+      margin-top: 2rem;
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,248,239,0.35);
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+    .tb-scroll-hint span {
+      display: inline-block;
+      width: 28px; height: 1px;
+      background: rgba(255,248,239,0.25);
+    }
+
+    /* ══════════════════════════════════════════════════
+       MAIN CONTENT (post-video)
+    ══════════════════════════════════════════════════ */
+    #main-content {
+      position: relative;
+      z-index: 20;
+      background: #f3ecdf;
+      color: #1c1a18;
+    }
+
+    .section-wrap {
+      width: min(1100px, calc(100vw - 3rem));
+      margin: 0 auto;
+      padding: 7rem 0;
+    }
+    .section-label {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: #b55c33;
+      margin-bottom: 2.75rem;
+    }
+    .section-title {
+      font-family: 'Instrument Serif', serif;
+      font-size: clamp(2rem, 3.5vw, 2.75rem);
+      line-height: 1.18;
+      font-weight: 400;
+      color: #1c1a18;
+    }
+
+    /* ─── Intro ─────────────────────────────────────── */
+    #intro { border-bottom: 1px solid rgba(28,26,24,0.1); }
+    .intro-lead { max-width: 640px; margin-bottom: 3.5rem; }
+    .intro-lead p {
+      font-size: 1.05rem;
+      line-height: 1.78;
+      color: rgba(28,26,24,0.65);
+      margin-top: 1.5rem;
+    }
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.25rem;
+    }
+    .card {
+      padding: 2rem;
+      background: rgba(255,255,255,0.55);
+      border: 1px solid rgba(28,26,24,0.09);
+      border-radius: 20px;
+    }
+    .card-num {
+      font-family: 'Instrument Serif', serif;
+      font-style: italic;
+      font-size: 2.25rem;
+      color: #b55c33;
+      line-height: 1;
+      margin-bottom: 1rem;
+    }
+    .card h3 {
+      font-size: 0.95rem;
+      font-weight: 700;
+      color: #1c1a18;
+      margin-bottom: 0.5rem;
+    }
+    .card p {
+      font-size: 0.85rem;
+      line-height: 1.65;
+      color: rgba(28,26,24,0.6);
+    }
+
+    /* ─── Trajectory ────────────────────────────────── */
+    #trajectory { border-bottom: 1px solid rgba(28,26,24,0.1); }
+    #trajectory .section-title { margin-bottom: 3.5rem; }
+    .traj-list { display: flex; flex-direction: column; }
+    .traj-row {
+      display: grid;
+      grid-template-columns: 220px 1fr;
+      gap: 2.5rem;
+      padding: 2.5rem 0;
+      border-top: 1px solid rgba(28,26,24,0.09);
+    }
+    .traj-period {
+      font-size: 0.68rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(28,26,24,0.38);
+      margin-bottom: 0.6rem;
+    }
+    .traj-company {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #1c1a18;
+    }
+    .traj-industry {
+      font-size: 0.75rem;
+      color: rgba(28,26,24,0.45);
+      margin-top: 0.25rem;
+    }
+    .traj-body h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #1c1a18;
+      margin-bottom: 0.75rem;
+    }
+    .traj-body > p {
+      font-size: 0.875rem;
+      line-height: 1.72;
+      color: rgba(28,26,24,0.65);
+      margin-bottom: 1rem;
+    }
+    .traj-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+    }
+    .traj-tag {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      padding: 0.3rem 0.72rem;
+      border-radius: 999px;
+      background: rgba(181,92,51,0.09);
+      color: #b55c33;
+      border: 1px solid rgba(181,92,51,0.2);
+    }
+
+    /* ─── Skills ────────────────────────────────────── */
+    #skills { border-bottom: 1px solid rgba(28,26,24,0.1); }
+    .skills-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5rem;
+      margin-top: 3.5rem;
+    }
+    .skill-group + .skill-group { margin-top: 2.25rem; }
+    .skill-group-label {
+      font-size: 0.62rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(28,26,24,0.38);
+      margin-bottom: 1rem;
+    }
+    .skill-cloud {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.45rem;
+    }
+    .skill-pill {
+      font-size: 0.8rem;
+      font-weight: 500;
+      padding: 0.42rem 0.95rem;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.65);
+      border: 1px solid rgba(28,26,24,0.1);
+      color: #1c1a18;
+    }
+    .lang-list { display: flex; flex-direction: column; gap: 0.65rem; }
+    .lang-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
+    .lang-name { font-size: 0.88rem; font-weight: 600; color: #1c1a18; }
+    .lang-level {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: rgba(28,26,24,0.38);
+    }
+    .edu-list { display: flex; flex-direction: column; gap: 1.1rem; }
+    .edu-name { font-size: 0.9rem; font-weight: 600; color: #1c1a18; }
+    .edu-detail {
+      font-size: 0.78rem;
+      color: rgba(28,26,24,0.45);
+      margin-top: 0.2rem;
+    }
+
+    /* ─── Contact ────────────────────────────────────── */
+    #contact { background: #1d2a2f; }
+    #contact .section-wrap {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+      gap: 2.5rem;
+    }
+    #contact .section-label { color: rgba(255,248,239,0.35); margin-bottom: 0; }
+    #contact .section-title { color: #fff8ef; }
+    .contact-links {
+      display: flex;
+      gap: 0.85rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+    .contact-link {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.85rem 1.85rem;
+      border-radius: 999px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.09em;
+      text-transform: uppercase;
+      transition: background 0.2s, transform 0.2s;
+    }
+    .contact-link.primary { background: #b55c33; color: #fff8ef; }
+    .contact-link.primary:hover { background: #c96a3f; transform: translateY(-2px); }
+    .contact-link.secondary {
+      background: rgba(255,248,239,0.07);
+      color: rgba(255,248,239,0.65);
+      border: 1px solid rgba(255,248,239,0.14);
+    }
+    .contact-link.secondary:hover { background: rgba(255,248,239,0.12); transform: translateY(-2px); }
+    .back-top {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.18em;
+      text-transform: uppercase;
+      color: rgba(255,248,239,0.25);
+      cursor: pointer;
+      border: none;
+      background: none;
+      transition: color 0.2s;
+    }
+    .back-top:hover { color: rgba(255,248,239,0.6); }
+
+    /* ─── Responsive ─────────────────────────────────── */
+    @media (max-width: 900px) {
+      .cards-grid { grid-template-columns: 1fr 1fr; }
+      .skills-layout { grid-template-columns: 1fr; gap: 2.5rem; }
+    }
+    @media (max-width: 680px) {
+      #nav { padding: 1.4rem 1.5rem; }
+      .nav-links { display: none; }
+      .text-block { max-width: calc(100vw - 3rem); }
+      .cards-grid { grid-template-columns: 1fr; }
+      .traj-row { grid-template-columns: 1fr; gap: 0.6rem; }
+      .section-wrap { padding: 4.5rem 0; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Loader -->
+  <div id="loader">
+    <div class="loader-monogram">VP</div>
+    <div class="loader-track">
+      <div class="loader-bar" id="loader-bar"></div>
+    </div>
+    <div class="loader-label" id="loader-label">Loading</div>
+  </div>
+
+  <!-- Fixed background video -->
+  <video id="scroll-video" muted playsinline preload="auto">
+    <source src="assets/kling_20260313.mp4" type="video/mp4">
+  </video>
+
+  <!-- Dark overlay -->
+  <div id="video-overlay"></div>
+
+  <!-- Progress bar -->
+  <div id="progress-bar"></div>
+
+  <!-- Scroll hint -->
+  <div id="scroll-hint">
+    <div class="hint-label">Scroll</div>
+    <div class="hint-line"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav id="nav">
+    <span class="nav-brand">Vladyslav Pavlusenko</span>
+    <div class="nav-links">
+      <a href="#intro">Story</a>
+      <a href="#trajectory">Trajectory</a>
+      <a href="#skills">Skills</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </nav>
+
+  <!-- ══ SCROLL ROOT — video scrubbing zone (600vh) ══ -->
+  <div id="scroll-root">
+
+    <!-- Block 0 · Hero · 0% – 13% -->
+    <div class="text-block" id="tb0"
+         data-start="0.00" data-end="0.13"
+         style="left:8%; bottom:16%;">
+      <p class="tb-eyebrow">Product Design Lead · UX Manager</p>
+      <h1 class="tb-h1">Vladyslav<br>Pavlusenko</h1>
+      <p class="tb-scroll-hint"><span></span> Scroll to explore</p>
+    </div>
+
+    <!-- Block 1 · Role · 15% – 29% -->
+    <div class="text-block" id="tb1"
+         data-start="0.15" data-end="0.29"
+         style="left:8%; bottom:26%;">
+      <p class="tb-eyebrow">Current role</p>
+      <p class="tb-role">Product Experience Lead</p>
+      <p class="tb-company">Phenom · HR Technology Platform · Enterprise SaaS</p>
+      <h2 class="tb-h2">Building enterprise<br>design at scale</h2>
+    </div>
+
+    <!-- Block 2 · 38 products · 30% – 44% -->
+    <div class="text-block" id="tb2"
+         data-start="0.30" data-end="0.44"
+         style="right:8%; bottom:26%; text-align:right;">
+      <p class="tb-eyebrow">Platform scope</p>
+      <span class="tb-stat">38</span>
+      <p class="tb-p">HR-Tech products shaped —<br>CMS, Analytics, Platform<br>Services and Design Studio</p>
+    </div>
+
+    <!-- Block 3 · Clients · 45% – 58% -->
+    <div class="text-block" id="tb3"
+         data-start="0.45" data-end="0.58"
+         style="left:8%; bottom:20%;">
+      <p class="tb-eyebrow">Enterprise clients</p>
+      <h2 class="tb-h2">Disney. Walmart.<br>Allianz. DHL.</h2>
+      <div class="tb-chips">
+        <span class="tb-chip">Campari</span>
+        <span class="tb-chip">Activision</span>
+        <span class="tb-chip">Orange</span>
+        <span class="tb-chip">ADNOC</span>
+        <span class="tb-chip">40+ presales</span>
+      </div>
+    </div>
+
+    <!-- Block 4 · 27 designers · 59% – 72% -->
+    <div class="text-block" id="tb4"
+         data-start="0.59" data-end="0.72"
+         style="right:8%; bottom:26%; text-align:right;">
+      <p class="tb-eyebrow">Team leadership</p>
+      <span class="tb-stat">27</span>
+      <p class="tb-p">Designers built and led across<br>USA, Spain, Romania, Israel,<br>India & Azerbaijan</p>
+    </div>
+
+    <!-- Block 5 · CTA · 73% – 90% -->
+    <div class="text-block" id="tb5"
+         data-start="0.73" data-end="0.90"
+         data-center="true"
+         style="left:50%; bottom:18%; text-align:center; width:600px; max-width:90vw;">
+      <p class="tb-eyebrow">10+ years · 20+ products delivered</p>
+      <h2 class="tb-h2">Experience design<br>as a business driver.</h2>
+      <a href="#intro" class="tb-cta">Explore the story ↓</a>
+    </div>
+
+  </div><!-- /#scroll-root -->
+
+  <!-- ══ MAIN CONTENT ══ -->
+  <div id="main-content">
+
+    <!-- Intro -->
+    <section id="intro">
+      <div class="section-wrap">
+        <p class="section-label">What this portfolio communicates</p>
+        <div class="intro-lead">
+          <h2 class="section-title">A decade of designing complex<br>systems for enterprise teams.</h2>
+          <p>From pre-sales to delivery, I've shaped product experiences across HR-tech, fintech, and digital product consultancy — leading teams, winning contracts, and building design at the scale that Fortune 500 companies demand.</p>
+        </div>
+        <div class="cards-grid">
+          <div class="card">
+            <div class="card-num">01</div>
+            <h3>Platform thinking</h3>
+            <p>Led end-to-end experience strategy for 38 HR-Tech products — from discovery to scalable delivery across CMS, Analytics, and Platform Services.</p>
+          </div>
+          <div class="card">
+            <div class="card-num">02</div>
+            <h3>Presales leadership</h3>
+            <p>Contributed to 40+ enterprise presales, translating product vision into compelling CX proposals for Fortune 500 clients across 3 continents.</p>
+          </div>
+          <div class="card">
+            <div class="card-num">03</div>
+            <h3>Design management</h3>
+            <p>Built and led a 27-person cross-functional design team across 6 countries — hiring, mentoring, career planning, and estimation governance.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Trajectory -->
+    <section id="trajectory">
+      <div class="section-wrap">
+        <p class="section-label">Career trajectory</p>
+        <h2 class="section-title">Where I've built, shipped,<br>and led.</h2>
+        <div class="traj-list">
+
+          <div class="traj-row">
+            <div>
+              <p class="traj-period">Sep 2021 → Now</p>
+              <p class="traj-company">Phenom</p>
+              <p class="traj-industry">HR Technology · Enterprise SaaS</p>
+            </div>
+            <div class="traj-body">
+              <h3>Product Experience (UX) Lead</h3>
+              <p>Lead product experience across CMS, Platform Services, and Analytics. Own end-to-end experience strategy from discovery to scalable delivery. Launched Design Studio — a new configurable product line enabling customer migration and self-service experience creation. Worked directly with Disney, Walmart, Campari, Activision, Allianz, Orange, DHL, and ADNOC.</p>
+              <div class="traj-tags">
+                <span class="traj-tag">38 Products</span>
+                <span class="traj-tag">Design Studio</span>
+                <span class="traj-tag">Enterprise Clients</span>
+                <span class="traj-tag">CX Strategy</span>
+                <span class="traj-tag">40+ Presales</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="traj-row">
+            <div>
+              <p class="traj-period">Mar 2019 → Now</p>
+              <p class="traj-company">Andersen</p>
+              <p class="traj-industry">Digital Product Consultancy</p>
+            </div>
+            <div class="traj-body">
+              <h3>Design Manager · Lead Product Designer</h3>
+              <p>Led design delivery across 20+ international projects for US and EU clients. Participated in 100+ sales engagements contributing to ~20 won projects. Deal sizes $8K–$120K, ongoing enterprise engagement ~$350K annually. Built and managed a 27-person team across 3–4 parallel projects.</p>
+              <div class="traj-tags">
+                <span class="traj-tag">27-Person Team</span>
+                <span class="traj-tag">100+ Presales</span>
+                <span class="traj-tag">Vodafone</span>
+                <span class="traj-tag">Toyota</span>
+                <span class="traj-tag">Schneider</span>
+                <span class="traj-tag">Carl Zeiss</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="traj-row">
+            <div>
+              <p class="traj-period">Jan → Sep 2021</p>
+              <p class="traj-company">Paxful</p>
+              <p class="traj-industry">Web3 · Fintech Marketplace</p>
+            </div>
+            <div class="traj-body">
+              <h3>Design Operations Manager</h3>
+              <p>Led design operations for a distributed team of 24 designers, transforming delivery into a scalable service-oriented model. Built design-as-a-service operational framework, established planning and delivery governance improving predictability and cross-team collaboration.</p>
+              <div class="traj-tags">
+                <span class="traj-tag">24 Designers</span>
+                <span class="traj-tag">Design Ops</span>
+                <span class="traj-tag">Delivery Governance</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="traj-row">
+            <div>
+              <p class="traj-period">Dec 2018 → Mar 2019</p>
+              <p class="traj-company">Lancaster Solutions</p>
+              <p class="traj-industry">iGaming · Product</p>
+            </div>
+            <div class="traj-body">
+              <h3>UX/UI Designer</h3>
+              <p>Front-end product team designer for WinOui and MadNix online casino platforms. UI/UX improvements driven by user feedback, new feature delivery in collaboration with dev team.</p>
+              <div class="traj-tags">
+                <span class="traj-tag">Product UI</span>
+                <span class="traj-tag">User Research</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="traj-row">
+            <div>
+              <p class="traj-period">Aug 2017 → Dec 2018</p>
+              <p class="traj-company">Freelance</p>
+              <p class="traj-industry">Web & Brand Design</p>
+            </div>
+            <div class="traj-body">
+              <h3>Web & Brand Designer</h3>
+              <p>Full range of design work: branding, identity, marketing materials, web design, game UI and application design. Key projects: Gemslight.ch, InTech, Lady's Bar, TechnoDream.</p>
+              <div class="traj-tags">
+                <span class="traj-tag">Branding</span>
+                <span class="traj-tag">Web Design</span>
+                <span class="traj-tag">Identity</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Skills -->
+    <section id="skills">
+      <div class="section-wrap">
+        <p class="section-label">Capabilities</p>
+        <h2 class="section-title">Tools, domains,<br>and ways of working.</h2>
+        <div class="skills-layout">
+          <div>
+            <div class="skill-group">
+              <p class="skill-group-label">Design & Product</p>
+              <div class="skill-cloud">
+                <span class="skill-pill">Product Experience Design</span>
+                <span class="skill-pill">User Research</span>
+                <span class="skill-pill">Platform Thinking</span>
+                <span class="skill-pill">Analytics</span>
+                <span class="skill-pill">Performance Optimisation</span>
+                <span class="skill-pill">Design Systems</span>
+                <span class="skill-pill">Pre-sales Management</span>
+                <span class="skill-pill">Strategic Client Leadership</span>
+              </div>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-label">Leadership & Operations</p>
+              <div class="skill-cloud">
+                <span class="skill-pill">Team Leadership</span>
+                <span class="skill-pill">People Management</span>
+                <span class="skill-pill">Mentoring & Talent Growth</span>
+                <span class="skill-pill">Design Operations</span>
+                <span class="skill-pill">Hiring & Career Planning</span>
+                <span class="skill-pill">Estimation</span>
+              </div>
+            </div>
+          </div>
+          <div>
+            <div class="skill-group">
+              <p class="skill-group-label">Languages</p>
+              <div class="lang-list">
+                <div class="lang-row"><span class="lang-name">English</span><span class="lang-level">B2</span></div>
+                <div class="lang-row"><span class="lang-name">Ukrainian</span><span class="lang-level">Native</span></div>
+                <div class="lang-row"><span class="lang-name">Russian</span><span class="lang-level">Native</span></div>
+                <div class="lang-row"><span class="lang-name">German</span><span class="lang-level">A2</span></div>
+              </div>
+            </div>
+            <div class="skill-group">
+              <p class="skill-group-label">Education</p>
+              <div class="edu-list">
+                <div>
+                  <p class="edu-name">Product Management & UX</p>
+                  <p class="edu-detail">University of Economics & Human Sciences · Warsaw · 2022, ongoing</p>
+                </div>
+                <div>
+                  <p class="edu-name">Design Management Patterns</p>
+                  <p class="edu-detail">Course · 2022</p>
+                </div>
+                <div>
+                  <p class="edu-name">Negotiations · 1st place tournament</p>
+                  <p class="edu-detail">Course · 2021</p>
+                </div>
+                <div>
+                  <p class="edu-name">People Management 3.0</p>
+                  <p class="edu-detail">Course · 2020</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact">
+      <div class="section-wrap">
+        <p class="section-label">Get in touch</p>
+        <h2 class="section-title">Let's build something<br>meaningful together.</h2>
+        <div class="contact-links">
+          <a href="mailto:pavlusenko.designer@gmail.com" class="contact-link primary">
+            pavlusenko.designer@gmail.com
+          </a>
+          <a href="https://t.me/pavlusenko_dsgnr" class="contact-link secondary" target="_blank" rel="noopener">
+            Telegram
+          </a>
+        </div>
+        <button class="back-top" onclick="window.scrollTo({top:0,behavior:'smooth'})">↑ Back to top</button>
+      </div>
+    </section>
+
+  </div><!-- /#main-content -->
+
+  <script>
+    /* ── Config ─────────────────────────────────────── */
+    const VIDEO_SCROLL_VH = 6;
+
+    /* ── Elements ───────────────────────────────────── */
+    const video       = document.getElementById('scroll-video');
+    const overlay     = document.getElementById('video-overlay');
+    const progressBar = document.getElementById('progress-bar');
+    const scrollHint  = document.getElementById('scroll-hint');
+    const loader      = document.getElementById('loader');
+    const loaderBar   = document.getElementById('loader-bar');
+    const loaderLabel = document.getElementById('loader-label');
+    const nav         = document.getElementById('nav');
+    const textBlocks  = document.querySelectorAll('.text-block');
+
+    /* ── State ──────────────────────────────────────── */
+    let videoReady     = false;
+    let ticking        = false;
+    let videoSectionPx = window.innerHeight * VIDEO_SCROLL_VH;
+
+    window.addEventListener('resize', () => {
+      videoSectionPx = window.innerHeight * VIDEO_SCROLL_VH;
+    }, { passive: true });
+
+    function videoFraction() {
+      return Math.min(Math.max(window.scrollY / videoSectionPx, 0), 1);
+    }
+
+    /* ── Video scrub ────────────────────────────────── */
+    function updateVideo(f) {
+      if (!videoReady || !video.duration) return;
+      const t = f * video.duration;
+      if (Math.abs(video.currentTime - t) > 0.016) video.currentTime = t;
+    }
+
+    /* ── Text blocks ────────────────────────────────── */
+    function updateText(f) {
+      textBlocks.forEach(el => {
+        const start    = parseFloat(el.dataset.start);
+        const end      = parseFloat(el.dataset.end);
+        const isCenter = el.dataset.center === 'true';
+
+        if (f >= start && f <= end) {
+          const p = (f - start) / (end - start);
+          let opacity, ty;
+
+          if (p < 0.18) {
+            opacity = p / 0.18;
+            ty = (1 - opacity) * 30;
+          } else if (p > 0.80) {
+            opacity = (1 - p) / 0.20;
+            ty = -((p - 0.80) / 0.20) * 20;
+          } else {
+            opacity = 1;
+            ty = 0;
+          }
+
+          el.style.opacity = Math.max(0, Math.min(1, opacity));
+          el.style.transform = isCenter
+            ? `translateX(-50%) translateY(${ty}px)`
+            : `translateY(${ty}px)`;
+          el.classList.add('active');
+        } else {
+          el.style.opacity = '0';
+          el.style.transform = el.dataset.center === 'true' ? 'translateX(-50%)' : '';
+          el.classList.remove('active');
+        }
+      });
+    }
+
+    /* ── Overlay ────────────────────────────────────── */
+    function updateOverlay(f) {
+      const alpha = f > 0.88
+        ? 0.38 + ((f - 0.88) / 0.12) * 0.62
+        : 0.38;
+      overlay.style.background = `rgba(0,0,0,${alpha})`;
+    }
+
+    /* ── Video / overlay visibility ─────────────────── */
+    function updateVisibility(f) {
+      const past = f >= 1;
+      video.style.opacity        = past ? '0' : '1';
+      overlay.style.opacity      = past ? '0' : '1';
+      progressBar.style.opacity  = past ? '0' : '1';
+      scrollHint.classList.toggle('visible', f < 0.06 && !past);
+    }
+
+    /* ── Nav ────────────────────────────────────────── */
+    function updateNav() {
+      nav.classList.toggle('scrolled', window.scrollY >= videoSectionPx * 0.92);
+    }
+
+    /* ── Progress ───────────────────────────────────── */
+    function updateProgress(f) {
+      progressBar.style.width = (f * 100) + '%';
+    }
+
+    /* ── Main frame ─────────────────────────────────── */
+    function frame() {
+      const f = videoFraction();
+      updateVideo(f);
+      updateText(f);
+      updateOverlay(f);
+      updateVisibility(f);
+      updateProgress(f);
+      updateNav();
+      ticking = false;
+    }
+
+    function onScroll() {
+      if (!ticking) {
+        requestAnimationFrame(frame);
+        ticking = true;
+      }
+    }
+
+    /* ── Loader ─────────────────────────────────────── */
+    function hideLoader() {
+      loaderBar.style.width = '100%';
+      loaderLabel.textContent = 'Ready';
+      setTimeout(() => loader.classList.add('hidden'), 450);
+    }
+
+    video.addEventListener('progress', () => {
+      if (video.duration > 0 && video.buffered.length > 0) {
+        const end = video.buffered.end(video.buffered.length - 1);
+        loaderBar.style.width = Math.round((end / video.duration) * 100) + '%';
+      }
+    });
+
+    video.addEventListener('loadedmetadata', () => {
+      videoReady = true;
+      window.addEventListener('scroll', onScroll, { passive: true });
+      frame();
+    });
+
+    video.addEventListener('canplaythrough', hideLoader, { once: true });
+
+    if (video.readyState >= 4) {
+      videoReady = true;
+      hideLoader();
+      window.addEventListener('scroll', onScroll, { passive: true });
+    } else if (video.readyState >= 1) {
+      videoReady = true;
+      window.addEventListener('scroll', onScroll, { passive: true });
+    }
+
+    /* Initial render + scroll hint */
+    frame();
+    setTimeout(() => scrollHint.classList.add('visible'), 1400);
+  </script>
+
+</body>
+</html>

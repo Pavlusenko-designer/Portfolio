@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(start d:/Projects/Portfolio/index.html)",
+      "Bash(python3 \"C:/Users/Влад/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"portfolio personal branding dark cinematic minimal\" --design-system -p \"VP Portfolio\" -f markdown)",
+      "Bash(python \"C:/Users/Влад/.claude/skills/ui-ux-pro-max/scripts/search.py\" \"portfolio personal branding dark cinematic minimal\" --design-system -p \"VP Portfolio\" -f markdown)"
+    ]
+  }
+}
